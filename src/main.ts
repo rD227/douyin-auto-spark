@@ -238,7 +238,26 @@ function resolveDouyinTargetNames(): string[] {
 }
 
 /**
- * 解析一言数据列表。
+ * 从一言 API 随机拉取一条。失败时返回 null，不影响主流程。
+ */
+async function fetchHitokotoFromApi(): Promise<Yiyan | null> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 3000)
+  try {
+    const res = await fetch('https://v1.hitokoto.cn/?c=i&c=d&c=k', { signal: controller.signal })
+    if (!res.ok) return null
+    const data = (await res.json()) as Yiyan
+    if (!data?.hitokoto) return null
+    return data
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * 解析一言数据列表。本地文件 + 远程 API 各一条合并为候选池。
  */
 async function resolveYiyans(): Promise<Yiyan[]> {
   const yiyanText = await readFile('assets/yiyan.json', 'utf8')
@@ -246,6 +265,12 @@ async function resolveYiyans(): Promise<Yiyan[]> {
 
   if (!Array.isArray(yiyans) || yiyans.length === 0) {
     throw new Error('assets/yiyan.json 必须是非空数组')
+  }
+
+  const remote = await fetchHitokotoFromApi()
+  if (remote) {
+    console.log(`已从一言 API 获取备选：${remote.hitokoto}`)
+    return [...yiyans, remote]
   }
 
   return yiyans
