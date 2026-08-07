@@ -9,6 +9,8 @@ import type { Yiyan } from './types/yiyan'
 const DOUYIN_COOKIE_KEY = 'DOUYIN_COOKIE'
 const DOUYIN_TARGET_NAMES_KEY = 'DOUYIN_TARGET_NAMES'
 const YIYAN_INCLUDE_SOURCE_KEY = 'YIYAN_INCLUDE_SOURCE'
+const DOUYIN_CHAT_PAGE_READY_TIMEOUT_MS_KEY = 'DOUYIN_CHAT_PAGE_READY_TIMEOUT_MS'
+const DEFAULT_CHAT_PAGE_READY_TIMEOUT_MS = 60000
 const FAILURE_SCREENSHOT_PATH = 'artifacts/failure-screenshot.png'
 
 /**
@@ -19,6 +21,7 @@ async function main(): Promise<void> {
   const headless = resolveHeadless()
   const autoClose = resolveAutoClose()
   const includeYiyanSource = resolveYiyanIncludeSource()
+  const chatPageReadyTimeoutMs = resolveChatPageReadyTimeoutMs()
   const douyinCookies = resolveDouyinCookies()
   const targetNames = resolveDouyinTargetNames()
   const yiyans = await resolveYiyans()
@@ -37,10 +40,8 @@ async function main(): Promise<void> {
       waitUntil: 'domcontentloaded',
     })
 
-    await page.waitForTimeout(30000)
-
     const searchInput = page.locator('input.semi-input[placeholder="搜索"]').first()
-    await searchInput.waitFor({ state: 'visible', timeout: 10000 })
+    await searchInput.waitFor({ state: 'visible', timeout: chatPageReadyTimeoutMs })
 
     for (const targetName of targetNames) {
       const name = String(targetName).trim()
@@ -191,6 +192,24 @@ function resolveYiyanIncludeSource(): boolean {
   }
 
   throw new Error(`${YIYAN_INCLUDE_SOURCE_KEY} 只能配置为 true 或 false`)
+}
+
+/**
+ * 解析聊天页加载完成等待时长（毫秒）。
+ */
+function resolveChatPageReadyTimeoutMs(): number {
+  const timeoutText = process.env[DOUYIN_CHAT_PAGE_READY_TIMEOUT_MS_KEY]?.trim()
+
+  if (!timeoutText) {
+    return DEFAULT_CHAT_PAGE_READY_TIMEOUT_MS
+  }
+
+  const timeout = Number.parseInt(timeoutText, 10)
+  if (!Number.isFinite(timeout) || timeout < 1000) {
+    throw new Error(`${DOUYIN_CHAT_PAGE_READY_TIMEOUT_MS_KEY} 必须是大于等于 1000 的整数毫秒值`)
+  }
+
+  return timeout
 }
 
 /**

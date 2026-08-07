@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: mcr.microsoft.com/playwright:v1.61.0-jammy
-    timeout-minutes: 15
+    timeout-minutes: 30
 
     steps:
       - name: 克隆当前仓库 (Clone current repo)
@@ -33,6 +33,7 @@ jobs:
           DOUYIN_COOKIE: ${{ secrets.DOUYIN_COOKIE }}
           DOUYIN_TARGET_NAMES: ${{ secrets.DOUYIN_TARGET_NAMES }}
           YIYAN_INCLUDE_SOURCE: ${{ secrets.YIYAN_INCLUDE_SOURCE }}
+          DOUYIN_CHAT_PAGE_READY_TIMEOUT_MS: ${{ secrets.DOUYIN_CHAT_PAGE_READY_TIMEOUT_MS }}
         run: bun src/main.ts
 
       - name: 发送失败邮件 (Send failure email)
