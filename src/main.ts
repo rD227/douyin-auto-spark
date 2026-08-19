@@ -40,6 +40,19 @@ async function main(): Promise<void> {
     await page.waitForTimeout(30000)
 
     const searchInput = page.locator('input.semi-input[placeholder="搜索"]').first()
+
+    // 登录墙检测：Cookie 失效时 /chat 会停留在登录页（扫码/验证码登录），而不是聊天搜索页
+    const loginWall = page.getByText(/扫码登录|验证码登录/).first()
+    const loginWallVisible = await loginWall
+      .waitFor({ state: 'visible', timeout: 3000 })
+      .then(() => true)
+      .catch(() => false)
+    if (loginWallVisible) {
+      throw new Error(
+        '检测到抖音 /chat 显示的是登录页（扫码/验证码登录），说明 DOUYIN_COOKIE 已失效或未生效，请重新导出 Cookie 并更新 GitHub Secret DOUYIN_COOKIE',
+      )
+    }
+
     await searchInput.waitFor({ state: 'visible', timeout: 10000 })
 
     for (const targetName of targetNames) {
