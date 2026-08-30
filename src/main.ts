@@ -152,6 +152,7 @@ async function runDouyinAccount(
     }
 
     await waitForChatListReady(page, account.name)
+    await waitForVerifyToClear(page)
 
     // 记录未命中的会话，等其余好友都发完再统一报错，避免一个人改名连累当天所有人。
     const missingNames: string[] = []
@@ -244,6 +245,24 @@ async function waitForChatListReady(page: Page, accountName: string): Promise<vo
 
   // 会话列表的头像与最近消息还会继续拉取，等网络安静下来搜索命中率更高。
   await page.waitForLoadState('networkidle', { timeout: CHAT_PAGE_IDLE_TIMEOUT }).catch(() => {})
+}
+
+/**
+ * 等待抖音的「二次验证」遮罩（滑块/保存登录信息提示）消失。
+ *
+ * 新的自动化浏览器会话登录后可能弹出 uc-second-verify 验证遮罩，拦截后续点击。
+ * 等它隐藏后再开始搜索，避免点击被遮罩挡住。
+ */
+async function waitForVerifyToClear(page: Page, timeout = 15000): Promise<void> {
+  const verifyMask = page.locator('#uc-second-verify, [class*="second_verify"]').first()
+  const cleared = await verifyMask
+    .waitFor({ state: 'hidden', timeout })
+    .then(() => true)
+    .catch(() => false)
+
+  if (!cleared) {
+    console.log('二次验证遮罩未在预期时间内消失，继续尝试（依赖后续重试兜底）')
+  }
 }
 
 /**
