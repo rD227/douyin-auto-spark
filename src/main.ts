@@ -322,6 +322,8 @@ async function captureFailureScreenshot(
     await page.screenshot({
       path: screenshotPath,
       fullPage: true,
+      // 登录墙等异常页面字体可能永远加载不完，缩短超时避免失败截图拖慢任务。
+      timeout: 5000,
     })
     console.log(`已保存失败截图：${screenshotPath}`)
   } catch (error) {
