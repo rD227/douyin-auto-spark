@@ -139,6 +139,7 @@ jobs:
           subject: 抖音续火任务成功
           to: ${{ secrets.MAIL_TO || secrets.MAIL_ADDRESS }}
           from: ${{ secrets.MAIL_ADDRESS }}
+          attachments: artifacts/*.png
           body: |
             抖音续火任务执行成功
             仓库：${{ github.repository }}

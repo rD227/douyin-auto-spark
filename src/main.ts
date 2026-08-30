@@ -213,6 +213,7 @@ async function runDouyinAccount(
       )
     }
 
+    await captureSuccessScreenshot(page, account.name)
     console.log(`账号执行完成：${account.name}`)
   } catch (error) {
     await captureFailureScreenshot(page, account.name)
@@ -312,22 +313,40 @@ async function captureFailureScreenshot(
   page: Page | undefined,
   accountName: string,
 ): Promise<void> {
+  await captureScreenshot(page, accountName, 'failure')
+}
+
+/**
+ * 在账号执行成功后保存页面截图，用于核对消息是否真的发出去了。
+ */
+async function captureSuccessScreenshot(
+  page: Page | undefined,
+  accountName: string,
+): Promise<void> {
+  await captureScreenshot(page, accountName, 'success')
+}
+
+async function captureScreenshot(
+  page: Page | undefined,
+  accountName: string,
+  kind: 'failure' | 'success',
+): Promise<void> {
   if (!page || page.isClosed()) {
     return
   }
 
   try {
     await mkdir(FAILURE_SCREENSHOT_DIRECTORY, { recursive: true })
-    const screenshotPath = `${FAILURE_SCREENSHOT_DIRECTORY}/failure-screenshot-${toSafeFileName(accountName)}.png`
+    const screenshotPath = `${FAILURE_SCREENSHOT_DIRECTORY}/${kind}-screenshot-${toSafeFileName(accountName)}.png`
     await page.screenshot({
       path: screenshotPath,
       fullPage: true,
-      // 登录墙等异常页面字体可能永远加载不完，缩短超时避免失败截图拖慢任务。
+      // 登录墙等异常页面字体可能永远加载不完，缩短超时避免截图拖慢任务。
       timeout: 5000,
     })
-    console.log(`已保存失败截图：${screenshotPath}`)
+    console.log(`已保存${kind === 'success' ? '成功' : '失败'}截图：${screenshotPath}`)
   } catch (error) {
-    console.error('保存失败截图失败:', error)
+    console.error('保存截图失败:', error)
   }
 }
 
