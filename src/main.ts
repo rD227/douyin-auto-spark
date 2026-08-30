@@ -174,12 +174,8 @@ async function runDouyinAccount(
       await searchResult.getByText(/^(发消息|发私信)$/).click({ timeout: 5000 })
       console.log(`[${account.name}] 已打开私信：${targetName}`)
 
-      const editorInput = page
-        .locator(
-          '.messageEditorimChatEditorContainer [data-slate-editor="true"][contenteditable="true"]',
-        )
-        .first()
-      await editorInput.waitFor({ state: 'visible', timeout: 10000 })
+      // 点完「发消息」后右侧会话面板需要时间加载，慢网络下 10 秒不够，用长超时 + 重试等待编辑器出现。
+      const editorInput = await waitForEditorInput(page)
       await editorInput.click()
 
       let message: string
@@ -370,6 +366,29 @@ async function gotoWithRetry(page: Page, url: string, retries = 3): Promise<void
     } catch (error) {
       lastError = error
       console.log(`第 ${attempt} 次导航 ${url} 失败，即将重试：${toError(error).message}`)
+      if (attempt < retries) {
+        await page.waitForTimeout(3000)
+      }
+    }
+  }
+  throw lastError
+}
+
+/**
+ * 点「发消息」后等待右侧消息编辑器出现，长超时 + 重试，应对慢网络下会话面板加载慢。
+ */
+async function waitForEditorInput(page: Page, retries = 4): Promise<Locator> {
+  const editorInput = page
+    .locator('.messageEditorimChatEditorContainer [data-slate-editor="true"][contenteditable="true"]')
+    .first()
+  let lastError: unknown
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await editorInput.waitFor({ state: 'visible', timeout: 15000 })
+      return editorInput
+    } catch (error) {
+      lastError = error
+      console.log(`第 ${attempt} 次等待消息编辑器出现失败，即将重试：${toError(error).message}`)
       if (attempt < retries) {
         await page.waitForTimeout(3000)
       }
