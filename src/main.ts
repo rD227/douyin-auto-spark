@@ -123,9 +123,8 @@ async function runDouyinAccount(
     await context.addCookies(account.cookies)
 
     page = await context.newPage()
-    await page.goto('https://www.douyin.com/chat', {
-      waitUntil: 'domcontentloaded',
-    })
+    // GitHub 美国 runner 访问抖音（国内 CDN）首屏可能很慢，用长超时 + 重试兜底。
+    await gotoWithRetry(page, 'https://www.douyin.com/chat')
 
     await page.waitForTimeout(30000)
 
@@ -357,6 +356,26 @@ function toSafeFileName(value: string): string {
 
 function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error))
+}
+
+/**
+ * 带长超时与重试地导航到抖音聊天页，应对慢网络（尤其美国 runner 访问国内 CDN）。
+ */
+async function gotoWithRetry(page: Page, url: string, retries = 3): Promise<void> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 })
+      return
+    } catch (error) {
+      lastError = error
+      console.log(`第 ${attempt} 次导航 ${url} 失败，即将重试：${toError(error).message}`)
+      if (attempt < retries) {
+        await page.waitForTimeout(3000)
+      }
+    }
+  }
+  throw lastError
 }
 
 /**
