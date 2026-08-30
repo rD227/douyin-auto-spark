@@ -351,7 +351,8 @@ async function captureScreenshot(
 }
 
 function toSafeFileName(value: string): string {
-  return value.replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, '-').replace(/^-+|-+$/g, '') || 'account'
+  // \u53ea\u4fdd\u7559 ASCII\uff0c\u907f\u514d\u4e2d\u6587\u9644\u4ef6\u540d\u5728\u90e8\u5206 SMTP \u573a\u666f\u88ab\u9759\u9ed8\u4e22\u5f03\u5bfc\u81f4\u90ae\u4ef6\u6ca1\u9644\u4ef6\u3002
+  return value.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'account'
 }
 
 function toError(error: unknown): Error {
