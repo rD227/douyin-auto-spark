@@ -94,7 +94,9 @@ jobs:
           DOUYIN_TARGET_NAMES: ${{ secrets.DOUYIN_TARGET_NAMES }}
           YIYAN_INCLUDE_SOURCE: ${{ secrets.YIYAN_INCLUDE_SOURCE }}
           SPARK_MESSAGE_TEMPLATE: ${{ secrets.SPARK_MESSAGE_TEMPLATE }}
-        run: bun src/main.ts
+          # 无头模式会被抖音识别导致消息发送失败（红点），改用有头模式 + xvfb 虚拟显示。
+          PLAYWRIGHT_HEADLESS: "false"
+        run: xvfb-run --auto-servernum bun src/main.ts
 
       - name: 检查邮件配置 (Check mail configuration)
         id: mail-config
