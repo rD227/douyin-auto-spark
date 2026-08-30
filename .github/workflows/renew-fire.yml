@@ -127,6 +127,23 @@ jobs:
             仓库：${{ github.repository }}
             运行链接：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+      - name: 发送成功邮件 (Send success email)
+        if: ${{ success() && steps.mail-config.outputs.enabled == 'true' && (github.event_name != 'schedule' || needs.check.outputs.is_retry != 'true') }}
+        uses: dawidd6/action-send-mail@v18
+        with:
+          server_address: ${{ secrets.MAIL_HOST || 'smtp.qq.com' }}
+          server_port: ${{ secrets.MAIL_PORT || '465' }}
+          secure: ${{ secrets.MAIL_SECURE || 'true' }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: 抖音续火任务成功
+          to: ${{ secrets.MAIL_TO || secrets.MAIL_ADDRESS }}
+          from: ${{ secrets.MAIL_ADDRESS }}
+          body: |
+            抖音续火任务执行成功
+            仓库：${{ github.repository }}
+            运行链接：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
       - name: 发送失败邮件 (Send failure email)
         if: ${{ failure() && steps.mail-config.outputs.enabled == 'true' && (github.event_name != 'schedule' || needs.check.outputs.is_retry != 'true') }}
         uses: dawidd6/action-send-mail@v18
