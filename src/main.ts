@@ -119,7 +119,7 @@ async function runDouyinAccount(
   let page: Page | undefined
 
   try {
-    console.log(`开始执行账号：${account.name}`)
+    console.log(`[${new Date().toLocaleString()}] 开始执行账号：${account.name}`)
     await context.addCookies(account.cookies)
 
     page = await context.newPage()
