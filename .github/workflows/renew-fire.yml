@@ -2,9 +2,9 @@ name: 🚀 续一次火
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "10 0,2,4 * * *"
-      timezone: "Asia/Shanghai"
+  # schedule:
+  #   - cron: "10 0,2,4 * * *"
+  #     timezone: "Asia/Shanghai"
 
 permissions:
   actions: read
